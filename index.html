@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>Nuxeo tech talk - iOS SDK</title>
+
+		<meta name="description" content="Slides about Nuxeo iOS SDK">
+		<meta name="author" content="Arnaud Kervern">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<link rel="stylesheet" href="css/reveal.min.css">
+		<link rel="stylesheet" href="css/theme/default.css" id="theme">
+
+		<!-- For syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- If the query includes 'print-pdf', include the PDF print sheet -->
+		<script>
+			if( window.location.search.match( /print-pdf/gi ) ) {
+				var link = document.createElement( 'link' );
+				link.rel = 'stylesheet';
+				link.type = 'text/css';
+				link.href = 'css/print/pdf.css';
+				document.getElementsByTagName( 'head' )[0].appendChild( link );
+			}
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+				<section data-markdown>
+					# Nuxeo iOS SDK
+					### Meetup - Nuxeo Tech Talk
+
+----
+
+					_Created by [Arnaud Kervern](http://www.github.com/arnaudke) / [@arnaudke](http://www.twitter.com/arnaudke)_
+				</section>
+
+				<section>
+					<section data-markdown>
+						# Basic Nuxeo Concepts
+
+						### Non exhaustive...
+					</section>
+
+					<section data-markdown data-background="#8c4738">
+						## Document hierarchy
+
+						_Every document has a parent, except Root._
+					</section>
+
+					<section data-markdown data-background="#4d7e65">
+						## Document metadata
+
+						<code data-trim>
+							{
+							  "properties": {
+							    "dc:creator": "akervern", // field creator from dublincore schema
+							    "dc:nature": "comics",
+							    "dc:contributors": ["akervern"],
+							    "dc:created": "tomorrow",
+							    "dc:description": "A very nice description",
+							    ...
+							  }
+							}
+						</code>
+					</section>
+
+					<section data-markdown data-background="#007777">
+						## REST API
+
+						_CRUD our documents_
+					</section>
+
+					<section data-markdown data-background="#4d7e65">
+						## Automation
+
+_Like OSX Automator_
+					</section>
+				</section>
+
+				<section>
+					<section data-markdown>
+						# Plug me with Nuxeo
+
+						### ... said another app, one day.
+					</section>
+
+					<section data-markdown>
+						## JavaScript / NodeJS client
+
+						<code data-trim>
+	client.operation('Document.GetChildren')
+	.input('doc:/')
+	.execute(function(error, children) {
+		if (error) {
+			// something went wrong
+			throw error;
+		}
+
+		// do something with children
+	});
+						</code>
+
+					</section>
+
+					<section>
+						<h2>Java</h2>
+
+						<pre><code>
+import org.nuxeo.ecm.automation.client.model.documents;
+import org.nuxeo.ecm.automation.client.Session;
+
+public static void main(String[] args) throws Exception {
+		HttpAutomationClient client = new HttpAutomationClient(
+	    "http://localhost:8080/nuxeo/site/automation");
+
+  Session session = client.getSession("Administrator", "Administrator");
+  Documents docs = (Documents) session.newRequest("Document.Query").set(
+    "query", "SELECT * FROM Document").execute();
+  System.out.println(docs);
+
+  client.shutdown();
+}
+</code></pre>
+					</section>
+
+					<section >
+					  <h2>PHP</h2>
+
+						<pre><code data-trim>
+$client = new PhpAutomationClient('http://localhost:8080/nuxeo/site/automation');
+
+$session = $client->getSession('Administrator','Administrator');
+
+$answer = $session->newRequest("Blob.Attach")->set('params', 'document', $path)
+->loadBlob($blob, $blobtype)
+->sendRequest();</code></pre>
+					</section>
+
+					<section data-markdown>
+						## Android
+
+						<code data-trim>
+	ctx.getServerConfig().setLogin("jdoe");
+	ctx.getServerConfig().setPassword("secret");
+	ctx.getServerConfig().setServerBaseUrl("http://10.0.2.2:8080/nuxeo/");
+
+	if (ctx.getNetworkStatus().isNuxeoServerReachable()) {
+	  Document doc = (Document) ctx.getSession().newRequest("Document.Fetch").set("value", docRef).execute();
+	}
+						</code>
+					</section>
+
+					<section data-markdown>
+						## And much more...
+
+						Nuxeo clients: [http://doc.nuxeo.com/x/oIf1](http://doc.nuxeo.com/x/oIf1)
+					</section>
+				</section>
+
+				<section>
+					<section data-markdown>
+						# Mobile work
+					</section>
+
+					<section data-markdown>
+						## Nuxeo Android
+						[github.com/nuxeo/nuxeo-android/](https://github.com/nuxeo/nuxeo-android/)
+
+						API client
+
+						Simple layout exposition
+
+						Offline actions stack
+
+						Built with Droid4Me from Smart&amp;Soft
+					</section>
+
+					<section data-markdown>
+						## Nuxeo Web Mobile
+
+						[github.com/nuxeo/nuxeo-web-mobile/](https://github.com/nuxeo/nuxeo-web-mobile/)
+
+						Mobile oriented website (jQuery Mobile)
+
+						Basic mobile front-end
+
+						Document files preview
+
+						Native app using Apache Cordova (iOS &amp; Android)
+					</section>
+				</section>
+
+				<section>
+					<section data-markdown>
+						# Let’s try with a real iOS library
+					</section>
+
+					<section>
+						<h2>Objective-C...</h2>
+
+						<pre><code>
+returnType (^blockName)(parameterTypes) = ^returnType(parameters) {...};
+
+- (void)someMethodThatTakesABlock:(returnType (^)(parameterTypes))blockName;
+
+[someObject someMethodThatTakesABlock: ^returnType (parameters) {...}];
+
+typedef returnType (^TypeName)(parameterTypes);
+TypeName blockName = ^returnType(parameters) {...};
+						</code></pre>
+
+						<h3>Need help.</h3>
+					</section>
+
+					<section data-markdown>
+						# Smart&amp;Soft
+					</section>
+				</section>
+
+				<section data-markdown>
+					# Making an iOS Lib?
+					### How can we do that?!
+				</section>
+
+				<section data-markdown data-background="#8c4738">
+					## How to deploy an app for testing?
+				</section>
+
+				<section>
+					<section data-markdown>
+						# TesflightApp
+
+						[testflightapp.com](https://www.testflightapp.com)
+					</section>
+
+					<section data-markdown>
+						## Share your builds with your testers
+						### Testers won’t need any dev certificates
+					</section>
+
+					<section data-markdown>
+						## Users rights on per build releases
+					</section>
+				</section>
+
+				<section data-markdown data-background="#007777">
+					## How to continuously test it?
+				</section>
+
+				<section>
+					<section data-markdown>
+						# Facebook XCTool
+
+						[github.com/facebook/xctool](https://github.com/facebook/xctool)
+
+						[qa.nuxeo.org/jenkins/job/nuxeo-sdk-ios-master/](http://qa.nuxeo.org/jenkins/job/nuxeo-sdk-ios-master/)
+					</section>
+
+					<section data-markdown>
+						## Runs the same as `xcodebuild`
+						### ... but with a human readable output.
+					</section>
+
+					<section>
+						<img src="https://camo.githubusercontent.com/f4c5388651b83663ff811969c0e2099073c25484/68747470733a2f2f66706f747465725f7075626c69632e73332e616d617a6f6e6177732e636f6d2f7863746f6f6c2d7569636174616c6f672e676966" alt="pouet" />
+					</section>
+
+					<section data-markdown>
+						## … or a jUnit XML Output to be ingested by Jenkins
+					</section>
+				</section>
+
+				<section data-markdown data-background="#4d7e65">
+					## How do Objective-C devs include a library into their project?
+				</section>
+
+				<section>
+					<section data-markdown>
+						# CocoaPods
+
+						[http://cocoapods.org/](http://cocoapods.org/)
+					</section>
+
+					<section data-markdown>
+						## Dependency manager
+					</section>
+
+					<section data-markdown>
+						## Podfile sample
+
+						<code data-trim>
+	$ cat Podfile
+	platform :ios, '7.0'
+	pod 'JSONKit',       '~> 1.4'
+	pod 'Reachability',  ‘>= 3.0'
+
+	$ pod install
+						</code>
+					</section>
+
+					<section data-markdown>
+						## Nuxeo's Cocoapods Specs Repository
+
+						[github.com/nuxeo/cocoapods-specs](https://github.com/nuxeo/cocoapods-specs)
+
+						<code>
+							$ pod repo add Nuxeo https://github.com/nuxeo/cocoapods-specs
+						</code>
+					</section>
+				</section>
+
+				<section data-markdown data-background="#8c4738">
+					## HTTP? JSON? Best practice…
+					## trying our best.
+				</section>
+
+				<section>
+					<section data-markdown>
+						# ASIHTTPRequest
+						# vs
+						# AFNetworking
+
+						### Which will win Nuxeo's HTTP battle?
+					</section>
+
+					<section data-markdown>
+						## AFNetworking
+
+						### new mainstream http lib
+					</section>
+
+					<section data-markdown>
+						## ASIHTTPRequest
+
+						### dead project?
+
+						###better caching integration
+					</section>
+				</section>
+
+				<section>
+					<section data-markdown>
+						# JSON Serializer / Deserializer
+					</section>
+
+					<section data-markdown>
+						## JSONKit? TouchJSON? NSJSON*?
+
+						### With Object mapping it should be better…
+					</section>
+
+					<section data-markdown>
+						## Foundation NSJSONSerialization
+					</section>
+				</section>
+
+				<section data-markdown>
+					# Nuxeo SDK iOS in practice
+				</section>
+
+				<section>
+					<section data-markdown>
+						# NUXJSONSerializer / NUXJSONMapper
+
+						### I'll save you the Headache
+					</section>
+
+					<section data-markdown>
+						## Property mapping introspection
+					</section>
+
+					<section data-markdown>
+						<code>
+							#import "NUXEntity.h"
+							@interface NUXDocument : NUXEntity
+
+							#pragma mark -
+							#pragma mark Somewhere else
+
+							[[NUXJSONMapper sharedMapper] registerEntityClass:[NUXDocument class]];
+						</code>
+					</section>
+
+					<section data-markdown>
+						<code>
+							NUXDocument *myDoc =
+								[NUXJSONSerializer entityWithData:someData error:&amp;error];
+						</code>
+					</section>
+				</section>
+
+				<section>
+					<section data-markdown>
+						# NUXSession
+					</section>
+
+					<section data-markdown>
+						## Holding Nuxeo’s URL and credentials.
+						### A shared session, configured with .plist file.
+					</section>
+				</section>
+
+				<section>
+					<section data-markdown>
+						# REST request
+
+						### NUXRequest
+					</section>
+
+					<section data-markdown>
+						## Built for our REST API
+
+						### Adaptor, Category, Schema, HTTP Method, HTTP header, …
+					</section>
+
+					<section>
+						<pre><code>
+							    NUXRequest *request = [[NUXRequest alloc] initWithSession:session];
+							    [request addURLSegment:@"path/default-domain/workspaces"];
+							    [request addSchema:@"file"];
+
+							    [session startRequestSynchronous:request withCompletionBlock:^{
+						            NSDictionary *json = [request responseJSONWithError:nil];
+							        	XCTAssertEqualObjects(@"/default-domain/workspaces", [json valueForKey:@"path"]); }
+											  																	failureBlock:^{
+							        	XCTFail(@"Request should not fail: %@", request.responseMessage);
+						    	}];
+						</code></pre>
+					</section>
+
+					<section data-markdown>
+						## Easy to instantiate using requests category
+
+						<code>
+							#import "NUXSession+requests.h"
+
+							NUXRequest *request = [session requestQuery:
+									@"select * from Document where ecm:mixinType = 'SuperSpace'"];
+						</code>
+					</section>
+				</section>
+
+				<section>
+					<section data-markdown>
+						# Automation Request
+
+						### NUXAutomationRequest
+					</section>
+
+					<section data-markdown>
+						## Built for our Automation API
+
+						### Chain parameters, Chain Input (file or document), Context variables
+					</section>
+
+					<section>
+						<pre><code>
+- (NUXAutomationRequest *)requestImportFile:(NSString *)file withParent:(NSString *)documentRef {
+    NUXAutomationRequest *request = [self requestOperation:@"FileManager.Import"];
+
+    [request addContextValue:documentRef forKey:@"currentDocument"];
+    [request setInputFile:file];
+
+    return request;
+}
+	</code></pre>
+					</section>
+				</section>
+
+				<section>
+					<section data-markdown>
+						## Much more ...
+
+						 - Blob LRU cache
+						 - Hierarchical cache
+						 - Document cache
+						 - ...
+					</section>
+				</section>
+
+				<section data-markdown>
+					# Thank you
+
+					### Questions during beers?
+				</section>
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.min.js"></script>
+
+		<script>
+
+			// Full list of configuration options available here:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+				transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+				// Parallax scrolling
+				// parallaxBackgroundImage: 'https://s3.amazonaws.com/hakim-static/reveal-js/reveal-parallax-1.jpg',
+				// parallaxBackgroundSize: '2100px 900px',
+
+				// Optional libraries used to extend on reveal.js
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+					{ src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>
